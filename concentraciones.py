@@ -44,9 +44,7 @@ st.markdown("""
 def fmt(valor, decimales=2):
     try:
         if valor is None: return "0,00"
-        # Formatear con separador de miles inglés (,) y decimal (.)
         s = f"{valor:,.{decimales}f}"
-        # Intercambiar: coma por punto y punto por coma
         return s.replace(",", "X").replace(".", ",").replace("X", ".")
     except:
         return str(valor)
@@ -58,7 +56,6 @@ def main():
 
     st.sidebar.header("📥 Configuración de Variables")
 
-    # Factores de conversión
     m_conv = {"kg": 1.0, "g": 0.001, "lb": 0.453592}
     v_conv = {"m3": 1.0, "L": 0.001, "gal": 0.00378541}
     t_conv = {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0}
@@ -104,7 +101,6 @@ def main():
     fe_val = cf1.number_input("Flujo de Entrada", value=1.0, format="%.3f", step=0.001)
     fe_unit = cf2.selectbox("Unidad", flow_units, key="u_fe")
     
-    # Función auxiliar para conversión de flujos
     def to_kg_s_fixed(val, unit, dens, mc, vc, tc):
         u_b, u_t = unit.split('/')
         mass = val * mc[u_b] if u_b in mc else val * vc[u_b] * dens
@@ -160,9 +156,10 @@ def main():
         ax1.plot(t_steps / t_conv[t_unit], C_t, color='#FFC0CB', lw=2)
         ax1.set_title("Concentración vs Tiempo")
         ax1.set_ylabel("Concentración [kg/kg]")
-        # Configurar formato de ejes para evitar amontonamiento
         ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 3)))
         st.pyplot(fig1)
+        # MÉTRICA RESTAURADA
+        st.metric(label=f"Concentración final (t={fmt(t_input, 1)})", value=f"{fmt(C_t[-1], 3)} kg/kg")
 
     with col2:
         fig2, ax2 = plt.subplots()
@@ -171,8 +168,10 @@ def main():
         ax2.set_ylabel("Masa [kg]")
         ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 1)))
         st.pyplot(fig2)
+        # MÉTRICA RESTAURADA
+        st.metric(label=f"Masa final del compuesto (t={fmt(t_input, 1)})", value=f"{fmt(D_t[-1], 3)} kg")
 
-    # --- FOOTER SEGURO ---
+    # --- FOOTER ---
     if os.path.exists("footer_image.png"):
         st.markdown('<div class="footer-image-container">', unsafe_allow_html=True)
         st.image("footer_image.png", width=250)

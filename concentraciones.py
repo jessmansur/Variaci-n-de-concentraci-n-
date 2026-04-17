@@ -5,10 +5,9 @@ import matplotlib.pyplot as plt
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Balance de Masa", layout="wide")
 
-# Estilo personalizado actualizado
+# Estilo personalizado
 st.markdown("""
     <style>
-    /* Carteles Rosa Claro Pastel para Supuestos y Avisos */
     .pink-box {
         background-color: #FFE4E1;
         padding: 12px;
@@ -31,14 +30,13 @@ st.markdown("""
         margin-bottom: 15px;
         font-style: italic;
     }
-    /* Cartel de cita: pequeño, blanco, sin marco, borde cuadrado */
     .quote-box-final {
         background-color: #B2EC5D;
         color: white;
         padding: 8px;
         text-align: center;
         width: 50%;
-        margin: 60px auto 20px auto; /* Dos líneas extra de margen superior */
+        margin: 60px auto 20px auto;
         font-size: 0.9rem;
         border-radius: 0px; 
     }
@@ -48,7 +46,7 @@ st.markdown("""
 def main():
     st.title("🧪 Balance de Masa y Concentración")
     
-    # Cartel de supuestos en Rosa Claro Pastel con texto corregido
+    # Cartel de supuestos
     st.markdown('<div class="pink-box">💡 <b>Supuestos:</b> Buen mezclado; no hay reacciones químicas; densidades homogéneas entre contenido inicial del recipiente y flujos de circulación.</div>', unsafe_allow_html=True)
 
     st.sidebar.header("📥 Configuración de Variables")
@@ -86,7 +84,7 @@ def main():
     st.sidebar.markdown(f'<p class="unit-hint">SI: {D0:.3f} kg</p>', unsafe_allow_html=True)
 
     c0_manual = st.sidebar.number_input("Concentración Inicial (opcional)", value=0.0, format="%.4f")
-    st.sidebar.markdown('<p class="validation-hint">si no se carga concentración inicial, se requiere cargar masa inicial del compuesto</p>', unsafe_allow_html=True)
+    st.sidebar.markdown('<p class="validation-hint">si no se carga concentración inicial, se requiere cargar masa inicial del compuesto (en proporción masa en masa)</p>', unsafe_allow_html=True)
     
     C0 = c0_manual if c0_manual > 0 else (D0 / M0 if M0 > 0 else 0.0)
     st.sidebar.markdown(f'<p class="unit-hint">Concentración calculada: {C0:.4f} kg/kg</p>', unsafe_allow_html=True)
@@ -109,7 +107,7 @@ def main():
 
     # 5. PARÁMETROS SIMULACIÓN
     st.sidebar.subheader("5. Parámetros de Simulación")
-    ce_input = st.sidebar.number_input("Concentración Entrada", value=0.1)
+    ce_input = st.sidebar.number_input("Concentración Entrada", value=0.1000, format="%.4f")
     st.sidebar.markdown('<p class="validation-hint">concentración solicitada en proporción masa en masa</p>', unsafe_allow_html=True)
     
     c_t1, c_t2 = st.sidebar.columns([2, 1])
@@ -132,7 +130,7 @@ def main():
     M_t, D_t = np.array(M_t), np.array(D_t)
     C_t = D_t / M_t
 
-    # --- ANÁLISIS DE MASA (Carteles en Rosa Pastel) ---
+    # --- ANÁLISIS DE MASA ---
     st.subheader("📊 Análisis de Masa")
     if abs(Fe_si - Fs_si) < 1e-7:
         st.markdown(f'<div class="pink-box">✅ <b>Estado Estacionario Detectado:</b> Los flujos son iguales. La masa total se mantiene constante en {M0:.2f} kg.</div>', unsafe_allow_html=True)
@@ -164,7 +162,7 @@ def main():
         st.pyplot(fig2)
         st.metric(label=f"Masa final del compuesto (t={t_input})", value=f"{D_t[-1]:.3f} kg")
 
-    # Frase final con los nuevos ajustes de estilo
+    # Frase final
     st.markdown('<div class="quote-box-final">"El pesimista se queja del viento; el optimista espera que cambie; el realista ajusta las velas" - William George Ward</div>', unsafe_allow_html=True)
 
 def to_kg_s(val, unit, dens, m_conv, v_conv, t_conv):

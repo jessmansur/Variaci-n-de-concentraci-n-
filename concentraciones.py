@@ -31,7 +31,14 @@ st.markdown("""
         margin-bottom: 15px;
         font-style: italic;
     }
-    /* Forzar alineación vertical de los elementos en el sidebar */
+    /* Centrado de imagen final */
+    .footer-center {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding-top: 40px;
+    }
+    /* Alineación vertical de inputs en el sidebar */
     [data-testid="stVerticalBlock"] > div > div > [data-testid="stHorizontalBlock"] {
         align-items: center !important;
     }
@@ -74,7 +81,7 @@ def main():
     M0 = v0_input * m_conv[v0_unit] if v0_unit in m_conv else v0_input * v_conv[v0_unit] * rho_si
     st.sidebar.markdown(f'<p class="unit-hint">SI: {fmt(M0, 3)} kg</p>', unsafe_allow_html=True)
 
-    # 3. COMPONENTE DE INTERÉS (Alineación corregida con CSS global)
+    # 3. COMPONENTE DE INTERÉS
     st.sidebar.subheader("3. Componente de Interés")
     c_d1, c_d2 = st.sidebar.columns([2, 1])
     d0_input = c_d1.number_input("Cantidad inicial (compuesto)", value=10.0, step=0.1, key="d0_val")
@@ -151,6 +158,7 @@ def main():
         fig1, ax1 = plt.subplots()
         ax1.plot(t_steps / t_conv[t_unit], C_t, color='#FFC0CB', lw=2)
         ax1.set_title("Concentración vs Tiempo")
+        ax1.set_xlabel(f"Tiempo [{t_unit}]") # Restaurado
         ax1.set_ylabel("Concentración [kg/kg]")
         ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 3)))
         st.pyplot(fig1)
@@ -160,19 +168,17 @@ def main():
         fig2, ax2 = plt.subplots()
         ax2.plot(t_steps / t_conv[t_unit], D_t, color='#B2EC5D', lw=2)
         ax2.set_title("Masa del Compuesto vs Tiempo")
+        ax2.set_xlabel(f"Tiempo [{t_unit}]") # Restaurado
         ax2.set_ylabel("Masa [kg]")
         ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 1)))
         st.pyplot(fig2)
         st.metric(label=f"Masa final del compuesto (t={fmt(t_input, 1)})", value=f"{fmt(D_t[-1], 3)} kg")
 
-    # --- FOOTER ROBUSTO A LA DERECHA ---
+    # --- FOOTER CENTRADO ---
     if os.path.exists("footer_image.png"):
-        st.write("---") # Línea divisoria final
-        # Creamos 3 columnas. La imagen va en la última (derecha).
-        # El ratio [2, 1, 2] asegura que la imagen tenga espacio pero esté pegada al borde derecho.
-        f_col1, f_col2, f_col3 = st.columns([1, 1, 2])
-        with f_col3:
-            st.image("footer_image.png", width=500, use_container_width=False)
+        st.markdown('<div class="footer-center">', unsafe_allow_html=True)
+        st.image("footer_image.png", width=500)
+        st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

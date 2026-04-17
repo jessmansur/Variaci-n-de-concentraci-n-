@@ -31,17 +31,9 @@ st.markdown("""
         margin-bottom: 15px;
         font-style: italic;
     }
-    /* Contenedor para alinear la imagen a la derecha y al final */
-    .footer-container {
-        display: flex;
-        justify-content: flex-end;
-        align-items: flex-end;
-        width: 100%;
-        padding-top: 40px;
-    }
-    /* Estilo para alinear verticalmente inputs en el sidebar */
-    [data-testid="stHorizontalBlock"] {
-        align-items: center;
+    /* Forzar alineación vertical de los elementos en el sidebar */
+    [data-testid="stVerticalBlock"] > div > div > [data-testid="stHorizontalBlock"] {
+        align-items: center !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -82,10 +74,9 @@ def main():
     M0 = v0_input * m_conv[v0_unit] if v0_unit in m_conv else v0_input * v_conv[v0_unit] * rho_si
     st.sidebar.markdown(f'<p class="unit-hint">SI: {fmt(M0, 3)} kg</p>', unsafe_allow_html=True)
 
-    # 3. COMPONENTE DE INTERÉS (Alineación corregida)
+    # 3. COMPONENTE DE INTERÉS (Alineación corregida con CSS global)
     st.sidebar.subheader("3. Componente de Interés")
     c_d1, c_d2 = st.sidebar.columns([2, 1])
-    # Se usa label_visibility="visible" implícito, la alineación se maneja vía CSS arriba
     d0_input = c_d1.number_input("Cantidad inicial (compuesto)", value=10.0, step=0.1, key="d0_val")
     d0_unit = c_d2.selectbox("Unidad", ["kg", "g", "lb", "L"], key="u_d0")
     st.sidebar.markdown('<p class="validation-hint">si no se carga cantidad inicial del compuesto, se requiere cargar concentración inicial</p>', unsafe_allow_html=True)
@@ -154,9 +145,9 @@ def main():
 
     # --- GRÁFICAS ---
     st.divider()
-    col1, col2 = st.columns(2)
+    col_g1, col_g2 = st.columns(2)
     
-    with col1:
+    with col_g1:
         fig1, ax1 = plt.subplots()
         ax1.plot(t_steps / t_conv[t_unit], C_t, color='#FFC0CB', lw=2)
         ax1.set_title("Concentración vs Tiempo")
@@ -165,7 +156,7 @@ def main():
         st.pyplot(fig1)
         st.metric(label=f"Concentración final (t={fmt(t_input, 1)})", value=f"{fmt(C_t[-1], 3)} kg/kg")
 
-    with col2:
+    with col_g2:
         fig2, ax2 = plt.subplots()
         ax2.plot(t_steps / t_conv[t_unit], D_t, color='#B2EC5D', lw=2)
         ax2.set_title("Masa del Compuesto vs Tiempo")
@@ -174,13 +165,14 @@ def main():
         st.pyplot(fig2)
         st.metric(label=f"Masa final del compuesto (t={fmt(t_input, 1)})", value=f"{fmt(D_t[-1], 3)} kg")
 
-    # --- FOOTER CON IMAGEN AGRANDADA Y A LA DERECHA ---
+    # --- FOOTER ROBUSTO A LA DERECHA ---
     if os.path.exists("footer_image.png"):
-        # Se usa un contenedor para forzar la alineación a la derecha
-        st.markdown('<div class="footer-container">', unsafe_allow_html=True)
-        # Tamaño duplicado (de 250 a 500)
-        st.image("footer_image.png", width=500)
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.write("---") # Línea divisoria final
+        # Creamos 3 columnas. La imagen va en la última (derecha).
+        # El ratio [2, 1, 2] asegura que la imagen tenga espacio pero esté pegada al borde derecho.
+        f_col1, f_col2, f_col3 = st.columns([1, 1, 2])
+        with f_col3:
+            st.image("footer_image.png", width=500, use_container_width=False)
 
 if __name__ == "__main__":
     main()

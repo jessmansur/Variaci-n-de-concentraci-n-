@@ -31,16 +31,21 @@ st.markdown("""
         margin-bottom: 15px;
         font-style: italic;
     }
-    .footer-image-container {
+    /* Contenedor para alinear la imagen a la derecha y al final */
+    .footer-container {
         display: flex;
         justify-content: flex-end;
-        padding-top: 50px;
-        padding-bottom: 20px;
+        align-items: flex-end;
+        width: 100%;
+        padding-top: 40px;
+    }
+    /* Estilo para alinear verticalmente inputs en el sidebar */
+    [data-testid="stHorizontalBlock"] {
+        align-items: center;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# Función para formatear números: 1.234,56
 def fmt(valor, decimales=2):
     try:
         if valor is None: return "0,00"
@@ -63,13 +68,13 @@ def main():
     # 1. CONTENIDO DEL RECIPIENTE
     st.sidebar.subheader("1. Contenido del Recipiente")
     c_v1, c_v2 = st.sidebar.columns([2, 1])
-    v0_input = c_v1.number_input("Cantidad inicial", value=100.0, step=0.1)
+    v0_input = c_v1.number_input("Cantidad inicial", value=100.0, step=0.1, key="v0_val")
     v0_unit = c_v2.selectbox("Unidad", ["kg", "g", "L", "m3", "gal", "lb"], key="u_v0")
     
     # 2. DENSIDAD
     st.sidebar.subheader("2. Densidad (ρ)")
     c_r1, c_r2 = st.sidebar.columns([2, 1])
-    rho_input = c_r1.number_input("Valor de ρ", value=1000.0, step=0.1)
+    rho_input = c_r1.number_input("Valor de ρ", value=1000.0, step=0.1, key="rho_val")
     rho_unit = c_r2.selectbox("Unidad", ["kg/m³", "g/cm³"], key="u_rho")
     rho_si = rho_input if rho_unit == "kg/m³" else rho_input * 1000.0
     st.sidebar.markdown(f'<p class="unit-hint">SI: {fmt(rho_si)} kg/m³</p>', unsafe_allow_html=True)
@@ -77,10 +82,11 @@ def main():
     M0 = v0_input * m_conv[v0_unit] if v0_unit in m_conv else v0_input * v_conv[v0_unit] * rho_si
     st.sidebar.markdown(f'<p class="unit-hint">SI: {fmt(M0, 3)} kg</p>', unsafe_allow_html=True)
 
-    # 3. COMPONENTE DE INTERÉS
+    # 3. COMPONENTE DE INTERÉS (Alineación corregida)
     st.sidebar.subheader("3. Componente de Interés")
     c_d1, c_d2 = st.sidebar.columns([2, 1])
-    d0_input = c_d1.number_input("Cantidad inicial (compuesto)", value=10.0, step=0.1)
+    # Se usa label_visibility="visible" implícito, la alineación se maneja vía CSS arriba
+    d0_input = c_d1.number_input("Cantidad inicial (compuesto)", value=10.0, step=0.1, key="d0_val")
     d0_unit = c_d2.selectbox("Unidad", ["kg", "g", "lb", "L"], key="u_d0")
     st.sidebar.markdown('<p class="validation-hint">si no se carga cantidad inicial del compuesto, se requiere cargar concentración inicial</p>', unsafe_allow_html=True)
     
@@ -96,9 +102,8 @@ def main():
     # 4. FLUJOS
     st.sidebar.subheader("4. Flujos")
     flow_units = ["kg/s", "kg/min", "kg/h", "L/s", "L/min", "L/h", "gal/min", "lb/min"]
-    
     cf1, cf2 = st.sidebar.columns([2, 1])
-    fe_val = cf1.number_input("Flujo de Entrada", value=1.0, format="%.3f", step=0.001)
+    fe_val = cf1.number_input("Flujo de Entrada", value=1.0, format="%.3f", step=0.001, key="fe_val")
     fe_unit = cf2.selectbox("Unidad", flow_units, key="u_fe")
     
     def to_kg_s_fixed(val, unit, dens, mc, vc, tc):
@@ -110,7 +115,7 @@ def main():
     st.sidebar.markdown(f'<p class="unit-hint">SI: {fmt(Fe_si, 5)} kg/s</p>', unsafe_allow_html=True)
 
     cf3, cf4 = st.sidebar.columns([2, 1])
-    fs_val = cf3.number_input("Flujo de Salida", value=1.0, format="%.3f", step=0.001)
+    fs_val = cf3.number_input("Flujo de Salida", value=1.0, format="%.3f", step=0.001, key="fs_val")
     fs_unit = cf4.selectbox("Unidad", flow_units, key="u_fs")
     Fs_si = to_kg_s_fixed(fs_val, fs_unit, rho_si, m_conv, v_conv, t_conv)
     st.sidebar.markdown(f'<p class="unit-hint">SI: {fmt(Fs_si, 5)} kg/s</p>', unsafe_allow_html=True)
@@ -121,7 +126,7 @@ def main():
     st.sidebar.markdown('<p class="validation-hint">concentración solicitada en proporción masa en masa</p>', unsafe_allow_html=True)
     
     c_t1, c_t2 = st.sidebar.columns([2, 1])
-    t_input = c_t1.number_input("Tiempo total", value=60.0, step=1.0)
+    t_input = c_t1.number_input("Tiempo total", value=60.0, step=1.0, key="t_val")
     t_unit = c_t2.selectbox("Unidad", ["s", "min", "h", "d"], key="u_t")
     T_max = t_input * t_conv[t_unit]
 
@@ -158,7 +163,6 @@ def main():
         ax1.set_ylabel("Concentración [kg/kg]")
         ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 3)))
         st.pyplot(fig1)
-        # MÉTRICA RESTAURADA
         st.metric(label=f"Concentración final (t={fmt(t_input, 1)})", value=f"{fmt(C_t[-1], 3)} kg/kg")
 
     with col2:
@@ -168,13 +172,14 @@ def main():
         ax2.set_ylabel("Masa [kg]")
         ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 1)))
         st.pyplot(fig2)
-        # MÉTRICA RESTAURADA
         st.metric(label=f"Masa final del compuesto (t={fmt(t_input, 1)})", value=f"{fmt(D_t[-1], 3)} kg")
 
-    # --- FOOTER ---
+    # --- FOOTER CON IMAGEN AGRANDADA Y A LA DERECHA ---
     if os.path.exists("footer_image.png"):
-        st.markdown('<div class="footer-image-container">', unsafe_allow_html=True)
-        st.image("footer_image.png", width=250)
+        # Se usa un contenedor para forzar la alineación a la derecha
+        st.markdown('<div class="footer-container">', unsafe_allow_html=True)
+        # Tamaño duplicado (de 250 a 500)
+        st.image("footer_image.png", width=500)
         st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":

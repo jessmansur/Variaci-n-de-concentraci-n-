@@ -31,12 +31,14 @@ st.markdown("""
         margin-bottom: 15px;
         font-style: italic;
     }
-    /* Centrado de imagen final */
+    /* Centrado de imagen final corregido */
     .footer-center {
         display: flex;
         justify-content: center;
+        align-items: center;
         width: 100%;
         padding-top: 40px;
+        padding-bottom: 20px;
     }
     /* Alineación vertical de inputs en el sidebar */
     [data-testid="stVerticalBlock"] > div > div > [data-testid="stHorizontalBlock"] {
@@ -154,12 +156,16 @@ def main():
     st.divider()
     col_g1, col_g2 = st.columns(2)
     
+    # Formateador para usar coma en el eje X
+    x_formatter = plt.FuncFormatter(lambda x, p: fmt(x, 1))
+
     with col_g1:
         fig1, ax1 = plt.subplots()
         ax1.plot(t_steps / t_conv[t_unit], C_t, color='#FFC0CB', lw=2)
         ax1.set_title("Concentración vs Tiempo")
-        ax1.set_xlabel(f"Tiempo [{t_unit}]") # Restaurado
+        ax1.set_xlabel(f"Tiempo [{t_unit}]")
         ax1.set_ylabel("Concentración [kg/kg]")
+        ax1.xaxis.set_major_formatter(x_formatter) # Coma en eje X
         ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 3)))
         st.pyplot(fig1)
         st.metric(label=f"Concentración final (t={fmt(t_input, 1)})", value=f"{fmt(C_t[-1], 3)} kg/kg")
@@ -168,8 +174,9 @@ def main():
         fig2, ax2 = plt.subplots()
         ax2.plot(t_steps / t_conv[t_unit], D_t, color='#B2EC5D', lw=2)
         ax2.set_title("Masa del Compuesto vs Tiempo")
-        ax2.set_xlabel(f"Tiempo [{t_unit}]") # Restaurado
+        ax2.set_xlabel(f"Tiempo [{t_unit}]")
         ax2.set_ylabel("Masa [kg]")
+        ax2.xaxis.set_major_formatter(x_formatter) # Coma en eje X
         ax2.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, p: fmt(x, 1)))
         st.pyplot(fig2)
         st.metric(label=f"Masa final del compuesto (t={fmt(t_input, 1)})", value=f"{fmt(D_t[-1], 3)} kg")

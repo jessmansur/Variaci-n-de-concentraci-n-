@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Balance de Masa", layout="wide")
 
 def main():
@@ -31,7 +31,7 @@ def main():
     d0_input = c_d1.number_input("Masa inicial D0", value=10.0)
     d0_unit = c_d2.selectbox("Unidad", ["kg", "g", "lb", "L"], key="u_d0")
 
-    # Conversiones base
+    # Diccionarios de conversión
     m_conv = {"kg": 1.0, "g": 0.001, "lb": 0.453592}
     v_conv = {"m3": 1.0, "L": 0.001, "gal": 0.00378541}
     t_conv = {"s": 1.0, "min": 60.0, "h": 3600.0, "d": 86400.0}
@@ -40,9 +40,9 @@ def main():
     M0 = v0_input * m_conv[v0_unit] if v0_unit in m_conv else v0_input * v_conv[v0_unit] * rho_si
     D0 = d0_input * v_conv["L"] * rho_si if d0_unit == "L" else d0_input * m_conv[d0_unit]
 
-    # Concentración Inicial (C0)
+    # Concentración Inicial (C0) con autocompletado
     c0_manual = st.sidebar.number_input("Concentración Inicial C0 (opcional)", value=0.0, format="%.4f", help="Si es 0, se calcula como D0/M0")
-    C0 = c0_manual if c0_manual > 0 else D0 / M0
+    C0 = c0_manual if c0_manual > 0 else (D0 / M0 if M0 > 0 else 0.0)
 
     # 4. FLUJOS
     st.sidebar.subheader("4. Flujos")
@@ -70,7 +70,7 @@ def main():
     t_unit = st.sidebar.selectbox("Unidad", ["s", "min", "h", "d"], key="u_t")
     T_max = t_input * t_conv[t_unit]
 
-    # CÁLCULOS
+    # --- LÓGICA DE CÁLCULO ---
     t_steps = np.linspace(0, T_max, 1000)
     dt = t_steps[1] - t_steps[0]
     M_t, D_t = [M0], [M0 * C0]
@@ -84,36 +84,41 @@ def main():
     M_t, D_t = np.array(M_t), np.array(D_t)
     C_t = D_t / M_t
 
-    # MÉTRICAS NORMALIZADAS
-    st.subheader("📊 Resumen de Flujos Masicos")
-    m1, m2 = st.columns(2)
-    # Normalización automática para la visualización
-    if Fe_si < 0.01: label, factor = "kg/h", 3600
-    elif Fe_si > 10: label, factor = "kg/s", 1
-    else: label, factor = "kg/min", 60
+    # --- AVISO ESTADO ESTACIONARIO ---
+    st.subheader("📊 Análisis de Masa")
+    if abs(Fe_si - Fs_si) < 1e-7:
+        st.success(f"✅ **Estado Estacionario Detectado:** Los flujos son iguales ({fe_val} {fe_unit}). La masa total se mantiene constante en {M0:.2f} kg.")
+    else:
+        delta_m = M_t[-1] - M0
+        st.warning(f"⚖️ **Sistema Dinámico:** La masa total {'aumentó' if delta_m > 0 else 'disminuyó'} en {abs(delta_m):.2f} kg durante el proceso.")
 
-    m1.metric("Entrada Real", f"{Fe_si * factor:.3f} {label}")
-    m2.metric("Salida Real", f"{Fs_si * factor:.3f} {label}")
-
-    # GRÁFICAS
+    # --- GRÁFICAS Y CARTELITOS ---
+    st.divider()
     g1, g2 = st.columns(2)
+    
     with g1:
+        st.subheader("Evolución de la Concentración")
         fig1, ax1 = plt.subplots()
-        ax1.plot(t_steps / t_conv[t_unit], C_t)
-        ax1.set_title("Evolución de la Concentración")
+        ax1.plot(t_steps / t_conv[t_unit], C_t, lw=2)
         ax1.set_xlabel(f"Tiempo [{t_unit}]")
-        ax1.set_ylabel("Concentración [kg compuesto / kg total]")
+        ax1.set_ylabel("Concentración [kg/kg]")
         ax1.grid(True, alpha=0.3)
         st.pyplot(fig1)
+        
+        # Cartel de valor final
+        st.metric(label=f"Concentración final (t={t_input})", value=f"{C_t[-1]:.3f} kg/kg")
 
     with g2:
+        st.subheader("Masa del Compuesto")
         fig2, ax2 = plt.subplots()
-        ax2.plot(t_steps / t_conv[t_unit], D_t, color='green')
-        ax2.set_title("Masa del Compuesto en el Tiempo")
+        ax2.plot(t_steps / t_conv[t_unit], D_t, color='green', lw=2)
         ax2.set_xlabel(f"Tiempo [{t_unit}]")
         ax2.set_ylabel("Masa [kg]")
         ax2.grid(True, alpha=0.3)
         st.pyplot(fig2)
+        
+        # Cartel de valor final
+        st.metric(label=f"Masa final del compuesto (t={t_input})", value=f"{D_t[-1]:.3f} kg")
 
 if __name__ == "__main__":
     main()

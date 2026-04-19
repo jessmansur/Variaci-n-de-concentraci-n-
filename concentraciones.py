@@ -97,7 +97,7 @@ def main():
 
     c0_manual = st.sidebar.number_input("Concentración Inicial (opcional)", value=0.0, format="%.4f", step=0.0001)
     
-    # CORRECCIÓN DE TEXTO SOLICITADA
+    # Texto de validación
     st.sidebar.markdown('<p class="validation-hint">Concentración solicitada en proporción masa en masa. <br> En caso de no cargar concentración inicial, se requiere completar el campo precedente de Cantidad inicial del compuesto</p>', unsafe_allow_html=True)
     
     C0 = c0_manual if c0_manual > 0 else (D0 / M0 if M0 > 0 else 0.0)
@@ -154,13 +154,13 @@ def main():
         st.markdown(f'<div class="pink-box">✅ <b>Estado Estacionario:</b> Masa constante en {fmt(M0)} kg.</div>', unsafe_allow_html=True)
     else:
         txt = "aumentó" if delta_m > 0 else "disminuyó"
-        st.markdown(f'<div class="pink-box">⚖️ <b>Sistema Dinámico:</b> La masa {txt} {fmt(abs(delta_m))} kg.</div>', unsafe_allow_html=True)
+        # CORRECCIÓN DE TEXTO SOLICITADA ABAJO
+        st.markdown(f'<div class="pink-box">⚖️ <b>Sistema Dinámico:</b> La masa total del sistema {txt} {fmt(abs(delta_m))} kg.</div>', unsafe_allow_html=True)
 
     # --- GRÁFICAS ---
     st.divider()
     col_g1, col_g2 = st.columns(2)
     
-    # Formateador para usar coma en el eje X
     x_formatter = plt.FuncFormatter(lambda x, p: fmt(x, 1))
 
     with col_g1:

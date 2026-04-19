@@ -96,8 +96,6 @@ def main():
     st.sidebar.markdown(f'<p class="unit-hint">SI: {fmt(D0, 3)} kg</p>', unsafe_allow_html=True)
 
     c0_manual = st.sidebar.number_input("Concentración Inicial (opcional)", value=0.0, format="%.4f", step=0.0001)
-    
-    # Texto de validación
     st.sidebar.markdown('<p class="validation-hint">Concentración solicitada en proporción masa en masa. <br> En caso de no cargar concentración inicial, se requiere completar el campo precedente de Cantidad inicial del compuesto</p>', unsafe_allow_html=True)
     
     C0 = c0_manual if c0_manual > 0 else (D0 / M0 if M0 > 0 else 0.0)
@@ -137,15 +135,22 @@ def main():
     # --- CÁLCULO ---
     t_steps = np.linspace(0, T_max, 1000)
     dt = t_steps[1] - t_steps[0]
-    M_t, D_t = [M0], [M0 * C0]
+    M_t, C_t = [M0], [C0]
 
     for i in range(len(t_steps)-1):
+        # Masa total del sistema (t)
         M_next = M_t[-1] + (Fe_si - Fs_si) * dt
         M_t.append(max(M_next, 1e-6))
-        dDdt = (Fe_si * ce_input) - (Fs_si * (D_t[-1] / M_t[-1]))
-        D_t.append(max(D_t[-1] + dDdt * dt, 0))
+        
+        # Variación de concentración dC/dt
+        dCdt = (Fe_si * (ce_input - C_t[-1])) / M_t[-1]
+        C_next = C_t[-1] + dCdt * dt
+        C_t.append(max(C_next, 0))
 
-    M_t, D_t, C_t = np.array(M_t), np.array(D_t), np.array(D_t) / np.array(M_t)
+    M_t = np.array(M_t)
+    C_t = np.array(C_t)
+    # CORRECCIÓN SOLICITADA: Masa del compuesto = C(t) * M_sistema(t)
+    D_t = C_t * M_t
 
     # --- RESULTADOS ---
     st.subheader("📊 Análisis de Masa")
@@ -154,7 +159,6 @@ def main():
         st.markdown(f'<div class="pink-box">✅ <b>Estado Estacionario:</b> Masa constante en {fmt(M0)} kg.</div>', unsafe_allow_html=True)
     else:
         txt = "aumentó" if delta_m > 0 else "disminuyó"
-        # CORRECCIÓN DE TEXTO SOLICITADA ABAJO
         st.markdown(f'<div class="pink-box">⚖️ <b>Sistema Dinámico:</b> La masa total del sistema {txt} {fmt(abs(delta_m))} kg.</div>', unsafe_allow_html=True)
 
     # --- GRÁFICAS ---
